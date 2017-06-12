@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- GOOGLE ANALYTICS SCRIPT -->
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments);},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m);
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-84715211-1', 'auto');
+            ga('send', 'pageview');
+        </script>
+        <meta charset="utf-8">
+        <META HTTP-EQUIV="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Wróblewski Piotr - Blackboard">
+        <meta name="author" content="Wróblewski Piotr">
+        <meta property="og:title" content="Wróblewski Piotr">
+        <meta property="og:image" content="https://wroblewskipiotr.pl/furyroad/furyroad.png">
+        <meta property="og:description" content="Wróblewski Piotr - Blackboard">
+        <link rel="icon" href="icon.png">
+        <title>BLACKBOARD</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css?family=Orbitron');
+            html, body {
+                font-family: 'Orbitron', sans-serif;
+                box-sizing:border-box;
+                background-color: #111;
+                color: #eee;
+            }
+            .canvasdiv {
+                width: 640px;
+                height: 480px;
+                margin: 0 auto;
+            }
+            .title {
+                width: 100px;
+                margin: 0 auto;
+            }
+            #blackboardcanvas {
+                width: 640px;
+                height: 480px;
+                background-color: #222;
+                margin-top: 10px;
+            }
+            
+            #blackboardcanvas:hover {
+                cursor:default;
+            }
+            .mybutton {
+                background-color: #666;
+                color: #bbb;
+                border: none;
+                padding: 5px;
+                width: 150px;
+            }
+            .mybutton:hover {
+                background-color: #777;
+                color: #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="title">
+            <h3>BLACKBOARD</h3>
+            <button class="mybutton" id="clearblackboard">Clear blackboard</button>
+        </div>
+        <div class="canvasdiv">
+            <canvas id="blackboardcanvas" width="320" height="240"></canvas>
+        </div>
+        
+        <script>
+            
+            var Canvas = {
+                canvas: null,
+                ctx: null,
+                width: 0,
+                height: 0,
+                init: function() {
+                    this.canvas = document.getElementById("blackboardcanvas");
+                    this.ctx = this.canvas.getContext("2d");
+                    this.ctx.imageSmoothingEnabled = false;
+                    this.ctx.scale(0.5, 0.5);
+                    this.width = this.canvas.width;
+                    this.height = this.canvas.height;
+                }
+            };
+            
+            var Blackboard = {
+                width: 0,
+                height: 0,
+                field : [],
+                init : function(canvas) {
+                    this.width = canvas.width;
+                    this.height = canvas.width;
+                    console.log(this.width + ":" +this.height);
+                    for (i = 0; i < this.height * this.width; i++) {
+                       this.field[i] = 0;
+                    }
+                }
+            };
+            var mouseIsDown = false;
+            
+            Canvas.init();
+            
+            var px = py = 0;
+            
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState === 4 && this.status === 200) {
+                   console.log('LOADING BLACKBOARD - OK');
+                   Blackboard.field = this.response;
+                   console.log(this.response);
+                   for (i = 0; i < Blackboard.height; i++) {
+                       for (j = 0; j < Blackboard.width; j++) {
+                           if (this.response[i * Blackboard.width + j] === 1) Canvas.ctx.fillRect(j, i, 1, 2);
+                       }
+                   }
+                   console.log('LOADED');
+                }
+            };
+            xmlhttp.open("POST", "getinfo.php", true);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("task=get");
+            
+            
+            Canvas.canvas.addEventListener('mousedown', function(evt) {
+                var mousePos = getMousePos(Canvas.canvas, evt);
+                    mouseIsDown = true;
+                    px = mousePos.x;
+                    py = mousePos.y;
+            }, false);
+
+            
+
+            Canvas.canvas.addEventListener('mouseup', function(evt) {
+                    var mousePos = getMousePos(Canvas.canvas, evt);
+                    mouseIsDown = false;
+                    px = mousePos.x;
+                    py = mousePos.y;                    
+            }, false);
+            
+            
+            Blackboard.init(Canvas);
+            
+            document.onkeydown = checkKey;
+
+            function checkKey(e) {
+                e = e || window.event;
+                if (e.keyCode == '38') {
+                    // up arrow
+                    var xmlhttp = new XMLHttpRequest();
+                    xmlhttp.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) {
+                           console.log(this.responseText);
+                        }
+                    };
+                    xmlhttp.open("POST", "getinfo.php", true);
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xmlhttp.send("task=add&array="+Blackboard.field);
+                }
+                else if (e.keyCode == '40') {
+                    // down arrow
+                    
+                    for (i = 0; i < Blackboard.width * Blackboard.height; i++) {
+                        if (Blackboard.field[i] === 1) console.log('OK!');
+                    }
+                }
+                else if (e.keyCode == '37') {
+                   // left arrow
+                }
+                else if (e.keyCode == '39') {
+                   // right arrow
+                }
+
+            }
+            
+            Canvas.canvas.addEventListener('mousemove', function(evt) {
+                var mousePos = getMousePos(Canvas.canvas, evt);
+                    if (mouseIsDown) {
+                        
+                        Canvas.ctx.beginPath();
+                        Canvas.ctx.moveTo(px, py);
+                        Canvas.ctx.lineTo(mousePos.x, mousePos.y);
+                        Canvas.ctx.stroke();
+                        Blackboard.field[mousePos.x * mousePos.y] = 1;
+                        console.log(mousePos.x + ':' + mousePos.y +'=' +Blackboard.field[mousePos.x * mousePos.y]);
+                        px = mousePos.x;
+                        py = mousePos.y;
+                    }
+            }, false);
+
+            function getMousePos(canvas, evt) {                
+                var rect = canvas.getBoundingClientRect();
+                return {
+                  x: Math.floor(evt.clientX - rect.left),
+                  y: Math.floor(evt.clientY  - rect.top)
+                };
+            }
+            
+            document.getElementById('clearblackboard').addEventListener('click', function(evt) {
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if (this.readyState === 4 && this.status === 200) {
+                       console.log(this.responseText);
+                    }
+                };
+                xmlhttp.open("POST", "getinfo.php", true);
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.send("task=clear");
+            });
+            
+        </script>
+    </body>
+</html>
