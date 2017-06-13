@@ -10,7 +10,6 @@
         }
         else if ($_POST['task'] === 'add') {
             $array = $_POST['array'];
-            $array .= ',';
             $fp = fopen('file.txt', 'a');
             //$json_array = json_encode($array);
             fwrite($fp, $array);
@@ -20,7 +19,8 @@
         }
         else if ($_POST['task'] === 'get') {
             $array = file_get_contents('file.txt');
-            echo $array;
+            $json = '[' . str_replace('][', '],[', $array) . ']';
+            echo $json;
         }
         else {
             echo 'Ooops something went wrong, mister...';

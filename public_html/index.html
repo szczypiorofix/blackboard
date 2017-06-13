@@ -94,82 +94,27 @@
             
             Canvas.init();
             var lockManualDrawing = false;
-            var px = 0, py = 0;
-            
-//            var connection = new WebSocket('127.0.0.1:80');
-//            connection.onopen = function () {
-//              connection.send('Ping'); // Send the message 'Ping' to the server
-//            };
-            
-            
-            
-            
-            function WebSocketTest()
-         {
-            if ("WebSocket" in window)
-            {
-               alert("WebSocket is supported by your Browser!");
-               
-               // Let us open a web socket
-               var ws = new WebSocket("ws://localhost:9998/echo");
-				
-               ws.onopen = function()
-               {
-                  // Web Socket is connected, send data using send()
-                  ws.send("Message to send");
-                  alert("Message is sent...");
-               };
-				
-               ws.onmessage = function (evt) 
-               { 
-                  var received_msg = evt.data;
-                  alert("Message is received...");
-               };
-				
-               ws.onclose = function()
-               { 
-                  // websocket is closed.
-                  alert("Connection is closed..."); 
-               };
-            }
-            
-            else
-            {
-               // The browser doesn't support WebSocket
-               alert("WebSocket NOT supported by your Browser!");
-            }
-         }
-            
-            WebSocketTest();
-            
+            var px = 0, py = 0;      
             
             function fillBlackboard() {
-                //Canvas.ctx.clearRect(0, 0, Canvas.width, Canvas.height);
                 var xmlhttp = new XMLHttpRequest();
                 xmlhttp.onreadystatechange = function() {
                     if (this.readyState === 4 && this.status === 200) {
-                       console.log('LOADING BLACKBOARD - OK');
-                       var rs = this.response.split(",");
-                       console.log('LOADED');
-                       //console.log(rs);
-
-                       if (rs.length > 1) {
-                            Canvas.ctx.beginPath();
-                            Canvas.ctx.lineWidth=2;
-                            Canvas.ctx.strokeStyle = '#eeeeee';
-                            //Canvas.ctx.moveTo(rs[0], rs[1]);
-                            for (i = 0; i < rs.length; i += 4) {
-                                //Canvas.ctx.fillStyle = "#eee";
-                                //Canvas.ctx.fillRect(rs[i], rs[i+1], 2, 2);
-                                //console.log(rs[i] +":" +rs[i+1]);
-                                
-                                //Canvas.ctx.moveTo(rs[i], rs[i+1]);
-                                Canvas.ctx.lineTo(rs[i], rs[i+1]);
-                                
-                                //console.log('FROM: '+rs[i]+":"+rs[i+1]+" to: "+rs[i+2] +":" +rs[i+3]);
-                            }
+                        console.log('LOADING BLACKBOARD - OK');
+                        //console.log(this.response);
+                        var parsed = JSON.parse(this.response);
+                        //console.log(parsed);
+                        Canvas.ctx.beginPath();
+                        Canvas.ctx.lineWidth=2;
+                        Canvas.ctx.strokeStyle = '#eeeeee';
+                        for (i = 0; i < parsed.length; i++) {
+                            
+                            Canvas.ctx.moveTo(parsed[i][0].x, parsed[i][0].y);
+                            for (j = 0; j < parsed[i].length; j++) {
+                                Canvas.ctx.lineTo(parsed[i][j].x, parsed[i][j].y);
+                            }  
                             Canvas.ctx.stroke();
-                        }
+                        }                        
                     }
                 };
                 xmlhttp.open("POST", "./getinfo.php", true);
@@ -179,7 +124,6 @@
             
             fillBlackboard();
             setInterval(fillBlackboard, 5000);
-            
             
             Canvas.canvas.addEventListener('mousedown', function(evt) {
                 var mousePos = getMousePos(Canvas.canvas, evt);
@@ -194,22 +138,21 @@
                 mouseIsDown = false;
                 px = mousePos.x;
                 py = mousePos.y;
-                console.log(Blackboard.fieldToSend);
+                //console.log(Blackboard.fieldToSend);
+                //console.log(JSON.stringify(Blackboard.fieldToSend));
                 
-                    var xmlhttp = new XMLHttpRequest();
-                    xmlhttp.onreadystatechange = function() {
-                        if (this.readyState == 4 && this.status == 200) {
-                           console.log(this.responseText);
-                        }
-                    };
-                    xmlhttp.open("POST", "./getinfo.php", true);
-                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                    xmlhttp.send("task=add&array="+Blackboard.fieldToSend);
-                    Blackboard.fieldToSend = [];
-                    lockManualDrawing = true;
-                
-                    fillBlackboard();
-                
+                var xmlhttp = new XMLHttpRequest();
+                xmlhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                       //console.log(this.responseText);
+                    }
+                };
+                xmlhttp.open("POST", "./getinfo.php", true);
+                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                xmlhttp.send("task=add&array="+JSON.stringify(Blackboard.fieldToSend));
+                Blackboard.fieldToSend = [];
+                lockManualDrawing = true;
+                fillBlackboard();
             }, false);
             
             
@@ -238,7 +181,7 @@
                     Canvas.ctx.beginPath();
                     Canvas.ctx.lineWidth=2;
                     Canvas.ctx.strokeStyle = '#eeeeee';
-                    Blackboard.fieldToSend.push([mousePos.x, mousePos.y]);
+                    Blackboard.fieldToSend.push({x : mousePos.x, y : mousePos.y});
                     Canvas.ctx.moveTo(px, py);
                     Canvas.ctx.lineTo(mousePos.x, mousePos.y);
                     Canvas.ctx.stroke();
