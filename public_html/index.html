@@ -95,6 +95,7 @@
                     this.width = canvas.width;
                     this.height = canvas.width;
                     console.log(this.width + ":" +this.height);
+                    let i = 0;
                     for (i = 0; i < this.height * this.width; i++) {
                        this.field[i] = 0;
                     }
@@ -104,7 +105,7 @@
             
             Canvas.init();
             
-            var px = py = 0;
+            var px = 0, py = 0;
             
             var xmlhttp = new XMLHttpRequest();
             xmlhttp.onreadystatechange = function() {
@@ -112,9 +113,15 @@
                    console.log('LOADING BLACKBOARD - OK');
                    Blackboard.field = this.response;
                    console.log(this.response);
-                   for (i = 0; i < Blackboard.height; i++) {
+                   let i = 0, j = 0;
+                   for (i = 0; i < 3; i++) {
                        for (j = 0; j < Blackboard.width; j++) {
-                           if (this.response[i * Blackboard.width + j] === 1) Canvas.ctx.fillRect(j, i, 1, 2);
+                           if (this.response[i * Blackboard.width + j] === '1') {
+                               Canvas.ctx.fillStyle = '#eee';
+                               Canvas.ctx.fillRect(j, i, 1, 1);
+                               console.log(j + ":" + i);
+                           }
+                           //console.log(i * Blackboard.width + j);
                        }
                    }
                    console.log('LOADED');
@@ -127,9 +134,9 @@
             
             Canvas.canvas.addEventListener('mousedown', function(evt) {
                 var mousePos = getMousePos(Canvas.canvas, evt);
-                    mouseIsDown = true;
-                    px = mousePos.x;
-                    py = mousePos.y;
+                mouseIsDown = true;
+                px = mousePos.x;
+                py = mousePos.y;
             }, false);
 
             
@@ -148,7 +155,7 @@
 
             function checkKey(e) {
                 e = e || window.event;
-                if (e.keyCode == '38') {
+                if (e.keyCode === 38) {
                     // up arrow
                     var xmlhttp = new XMLHttpRequest();
                     xmlhttp.onreadystatechange = function() {
@@ -160,17 +167,18 @@
                     xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                     xmlhttp.send("task=add&array="+Blackboard.field);
                 }
-                else if (e.keyCode == '40') {
+                else if (e.keyCode === 40) {
                     // down arrow
-                    
+                    let i = 0;
                     for (i = 0; i < Blackboard.width * Blackboard.height; i++) {
                         if (Blackboard.field[i] === 1) console.log('OK!');
                     }
                 }
-                else if (e.keyCode == '37') {
+                else if (e.keyCode === 37) {
                    // left arrow
+                   console.log('LEFT');
                 }
-                else if (e.keyCode == '39') {
+                else if (e.keyCode === 39) {
                    // right arrow
                 }
 
@@ -179,8 +187,9 @@
             Canvas.canvas.addEventListener('mousemove', function(evt) {
                 var mousePos = getMousePos(Canvas.canvas, evt);
                     if (mouseIsDown) {
-                        
                         Canvas.ctx.beginPath();
+                        Canvas.ctx.lineWidth=2;
+                        Canvas.ctx.strokeStyle = '#eeeeee';
                         Canvas.ctx.moveTo(px, py);
                         Canvas.ctx.lineTo(mousePos.x, mousePos.y);
                         Canvas.ctx.stroke();
@@ -200,6 +209,7 @@
             }
             
             document.getElementById('clearblackboard').addEventListener('click', function(evt) {
+                Canvas.ctx.clearRect(0, 0, Canvas.width * 2, Canvas.height * 2);
                 var xmlhttp = new XMLHttpRequest();
                 xmlhttp.onreadystatechange = function() {
                     if (this.readyState === 4 && this.status === 200) {
