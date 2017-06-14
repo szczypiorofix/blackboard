@@ -1,0 +1,41 @@
+@CHARSET "UTF-8";
+
+    @import url('https://fonts.googleapis.com/css?family=Pangolin');
+    html, body {
+        font-family: 'Pangolin', cursive;
+        box-sizing:border-box;
+        background-color: #111;
+        color: #eee;
+    }
+    .canvasdiv {
+        width: 640px;
+        height: 480px;
+        margin: 0 auto;
+        padding: 0 auto;
+        margin-top: 30px;
+    }
+    .title {
+        width: 100px;
+        margin: 0 auto;
+    }
+    #blackboardcanvas {
+        width: 640px;
+        height: 480px;
+        background-color: #333;
+    }
+
+    #blackboardcanvas:hover {
+        cursor: crosshair;
+    }
+    .mybutton {
+        font-family: 'Pangolin', cursive;
+        background-color: #666;
+        color: #bbb;
+        border: none;
+        padding: 5px;
+        width: 150px;
+    }
+    .mybutton:hover {
+        background-color: #777;
+        color: #ccc;
+    }
