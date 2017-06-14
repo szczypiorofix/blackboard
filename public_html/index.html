@@ -3,12 +3,12 @@
     <head>
         <!-- GOOGLE ANALYTICS SCRIPT -->
         <script>
-//            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-//                (i[r].q=i[r].q||[]).push(arguments);},i[r].l=1*new Date();a=s.createElement(o),
-//                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m);
-//                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-//            ga('create', 'UA-84715211-1', 'auto');
-//            ga('send', 'pageview');
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments);},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m);
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-84715211-1', 'auto');
+            ga('send', 'pageview');
         </script>
         <meta charset="utf-8">
         <META HTTP-EQUIV="Content-Type" content="text/html; charset=utf-8">
@@ -17,14 +17,14 @@
         <meta name="description" content="Wróblewski Piotr - Blackboard">
         <meta name="author" content="Wróblewski Piotr">
         <meta property="og:title" content="Wróblewski Piotr">
-        <meta property="og:image" content="https://wroblewskipiotr.pl/furyroad/furyroad.png">
+        <meta property="og:image" content="https://wroblewskipiotr.pl/blackboard/icon.png">
         <meta property="og:description" content="Wróblewski Piotr - Blackboard">
         <link rel="icon" href="icon.png">
         <title>BLACKBOARD</title>
         <style>
-            @import url('https://fonts.googleapis.com/css?family=Orbitron');
+            @import url('https://fonts.googleapis.com/css?family=Pangolin');
             html, body {
-                font-family: 'Orbitron', sans-serif;
+                font-family: 'Pangolin', cursive;
                 box-sizing:border-box;
                 background-color: #111;
                 color: #eee;
@@ -32,23 +32,24 @@
             .canvasdiv {
                 width: 640px;
                 height: 480px;
-                margin: 0 auto;
+                margin: 0;
+                padding: 0;
             }
             .title {
                 width: 100px;
-                margin: 0 auto;
+                margin-left: 50px;
             }
             #blackboardcanvas {
                 width: 640px;
                 height: 480px;
-                background-color: #222;
-                margin-top: 10px;
+                background-color: #333;
             }
             
             #blackboardcanvas:hover {
-                cursor:default;
+                cursor: crosshair;
             }
             .mybutton {
+                font-family: 'Pangolin', cursive;
                 background-color: #666;
                 color: #bbb;
                 border: none;
@@ -62,16 +63,22 @@
         </style>
     </head>
     <body>
-        <div class="title">
-            <h3>BLACKBOARD</h3>
-            <button class="mybutton" id="clearblackboard">Clear blackboard</button>
-        </div>
         <div class="canvasdiv">
             <canvas id="blackboardcanvas" width="640" height="480"></canvas>
         </div>
+        <div class="title">
+            <h2>BLACKBOARD</h2>
+            <button class="mybutton" id="clearblackboard">CLEAN BLACKBOARD</button>
+        </div>
+        
+        <!-- ##### SIMPLIFY.JS LIBRARY ##### -->
+        <script src="simplify.js"></script>
         
         <script>
-            
+            var mouseIsDown = false;
+            var px = 0, py = 0;
+            var mx = 0, my = 0, mpx = 0, mpy = 0;
+                
             var Canvas = {
                 canvas: null,
                 ctx: null,
@@ -90,12 +97,7 @@
                 height: 0,
                 fieldToSend : []
             };
-            var mouseIsDown = false;
-            
-            Canvas.init();
-            var lockManualDrawing = false;
-            var px = 0, py = 0;      
-            
+
             function fillBlackboard() {
                 var xmlhttp = new XMLHttpRequest();
                 xmlhttp.onreadystatechange = function() {
@@ -104,11 +106,14 @@
                         //console.log(this.response);
                         var parsed = JSON.parse(this.response);
                         //console.log(parsed);
+                        if (parsed.length === 0) {
+                            console.log('Request : clearing canvas.');
+                            Canvas.ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+                        }
                         Canvas.ctx.beginPath();
                         Canvas.ctx.lineWidth=2;
                         Canvas.ctx.strokeStyle = '#eeeeee';
                         for (i = 0; i < parsed.length; i++) {
-                            
                             Canvas.ctx.moveTo(parsed[i][0].x, parsed[i][0].y);
                             for (j = 0; j < parsed[i].length; j++) {
                                 Canvas.ctx.lineTo(parsed[i][j].x, parsed[i][j].y);
@@ -121,43 +126,14 @@
                 xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
                 xmlhttp.send("task=get");
             }
-            
-            fillBlackboard();
-            setInterval(fillBlackboard, 5000);
-            
-            Canvas.canvas.addEventListener('mousedown', function(evt) {
-                var mousePos = getMousePos(Canvas.canvas, evt);
-                mouseIsDown = true;
-                px = mousePos.x;
-                py = mousePos.y;
-                lockManualDrawing = true;
-            }, false);
 
-            Canvas.canvas.addEventListener('mouseup', function(evt) {
-                var mousePos = getMousePos(Canvas.canvas, evt);
-                mouseIsDown = false;
-                px = mousePos.x;
-                py = mousePos.y;
-                //console.log(Blackboard.fieldToSend);
-                //console.log(JSON.stringify(Blackboard.fieldToSend));
-                
-                var xmlhttp = new XMLHttpRequest();
-                xmlhttp.onreadystatechange = function() {
-                    if (this.readyState == 4 && this.status == 200) {
-                       //console.log(this.responseText);
-                    }
+            function getMousePos(canvas, evt) {                
+                var rect = canvas.getBoundingClientRect();
+                return {
+                  x: Math.round(evt.clientX - rect.left),
+                  y: Math.round(evt.clientY  - rect.top)
                 };
-                xmlhttp.open("POST", "./getinfo.php", true);
-                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xmlhttp.send("task=add&array="+JSON.stringify(Blackboard.fieldToSend));
-                Blackboard.fieldToSend = [];
-                lockManualDrawing = true;
-                fillBlackboard();
-            }, false);
-            
-            
-                        
-            document.onkeydown = checkKey;
+            }
 
             function checkKey(e) {
                 e = e || window.event;
@@ -175,41 +151,132 @@
                 }
             }
             
-            Canvas.canvas.addEventListener('mousemove', function(evt) {
-                var mousePos = getMousePos(Canvas.canvas, evt);
-                if (mouseIsDown) {
+            function addListeners() {
+                document.getElementById('clearblackboard').addEventListener('click', function(evt) {
+                    Canvas.ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+                    var xmlhttp = new XMLHttpRequest();
+                    xmlhttp.onreadystatechange = function() {
+                        if (this.readyState === 4 && this.status === 200) {
+                           console.log(this.responseText);
+                        }
+                    };
+                    xmlhttp.open("POST", "./getinfo.php", true);
+                    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    xmlhttp.send("task=clear");
+                });
+                
+                Canvas.canvas.addEventListener('mousemove', function(evt) {
+                    var mousePos = getMousePos(Canvas.canvas, evt);
+                    if (mouseIsDown) {
+                        Canvas.ctx.beginPath();
+                        Canvas.ctx.lineWidth=2;
+                        Canvas.ctx.strokeStyle = '#eeeeee';
+                        Blackboard.fieldToSend.push({x : mousePos.x, y : mousePos.y});
+                        Canvas.ctx.moveTo(px, py);
+                        Canvas.ctx.lineTo(mousePos.x, mousePos.y);
+                        Canvas.ctx.stroke();
+                        px = mousePos.x;
+                        py = mousePos.y;
+                    }
+                }, false);
+                
+                Canvas.canvas.addEventListener('mousedown', function(evt) {
+                        var mousePos = getMousePos(Canvas.canvas, evt);
+                        mouseIsDown = true;
+                        px = mousePos.x;
+                        py = mousePos.y;
+                    }, false);
+                    
+                Canvas.canvas.addEventListener('mouseup', function(evt) {
+                    var mousePos = getMousePos(Canvas.canvas, evt);
+                    mouseIsDown = false;
+                    px = mousePos.x;
+                    py = mousePos.y;
+                    //console.log(Blackboard.fieldToSend);
+                    //console.log(JSON.stringify(Blackboard.fieldToSend));
+                    
+                    if (Blackboard.fieldToSend.length > 0) {
+                        var xmlhttp = new XMLHttpRequest();
+                        xmlhttp.onreadystatechange = function() {
+                            if (this.readyState === 4 && this.status === 200) {
+                               //console.log(this.responseText);
+                            }
+                        };
+                        xmlhttp.open("POST", "./getinfo.php", true);
+                        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                        var simplePoints = simplify(Blackboard.fieldToSend, 1, false);
+                        xmlhttp.send("task=add&array="+JSON.stringify(simplePoints));
+                        console.log('Simplify off:');
+                        console.log(Blackboard.fieldToSend);
+                        console.log('Simplify on:');
+                        console.log(simplePoints);
+                        Blackboard.fieldToSend = [];
+                        fillBlackboard();
+                    }
+                }, false);
+                
+                // OBSŁUGA DOTYKU
+                Canvas.canvas.addEventListener("touchstart", function (event) {
+                    //console.log('x: ' + event.touches[0].pageX + ', y: ' + event.touches[0].pageY);
+                    event.preventDefault();
+                    //console.log(event.touches[0].pageX +":" +event.touches[0].pageY);
+                    mpx = Math.round(event.touches[0].pageX);
+                    mpy = Math.round(event.touches[0].pageY);
+                    console.log(mpx +":" +mpy);
+                }, false);
+
+                Canvas.canvas.addEventListener("touchmove", function (event) {
+                    //console.log('x: ' + event.touches[0].pageX + ', y: ' + event.touches[0].pageY);
+                    event.preventDefault();
+                    mx = Math.round(event.touches[0].pageX);
+                    my = Math.round(event.touches[0].pageY);
+                    //console.log(mx+":"+my);
                     Canvas.ctx.beginPath();
                     Canvas.ctx.lineWidth=2;
                     Canvas.ctx.strokeStyle = '#eeeeee';
-                    Blackboard.fieldToSend.push({x : mousePos.x, y : mousePos.y});
-                    Canvas.ctx.moveTo(px, py);
-                    Canvas.ctx.lineTo(mousePos.x, mousePos.y);
+                    Blackboard.fieldToSend.push({x : mx, y : my});
+                    Canvas.ctx.moveTo(mpx, mpy);
+                    Canvas.ctx.lineTo(mx, my);
                     Canvas.ctx.stroke();
-                    px = mousePos.x;
-                    py = mousePos.y;
-                }
-            }, false);
-
-            function getMousePos(canvas, evt) {                
-                var rect = canvas.getBoundingClientRect();
-                return {
-                  x: Math.round(evt.clientX - rect.left),
-                  y: Math.round(evt.clientY  - rect.top)
-                };
+                    mpx = mx;
+                    mpy = my;
+                }, false);
+                
+                Canvas.canvas.addEventListener("touchend", function (event) {
+                    event.preventDefault();
+                    var touches = event.changedTouches;
+                    console.log(touches.length);
+                    
+                    if (Blackboard.fieldToSend.length > 0 && touches.length === 1) {
+                        var xmlhttp = new XMLHttpRequest();
+                        xmlhttp.onreadystatechange = function() {
+                            if (this.readyState === 4 && this.status === 200) {
+                               //console.log(this.responseText);
+                            }
+                        };
+                        xmlhttp.open("POST", "./getinfo.php", true);
+                        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                        var simplePoints = simplify(Blackboard.fieldToSend, 1, false);
+                        xmlhttp.send("task=add&array="+JSON.stringify(simplePoints));
+                        console.log('Simplify off:');
+                        console.log(Blackboard.fieldToSend);
+                        console.log('Simplify on:');
+                        console.log(simplePoints);
+                        Blackboard.fieldToSend = [];
+                        fillBlackboard();
+                    }
+                }, false);
             }
             
-            document.getElementById('clearblackboard').addEventListener('click', function(evt) {
-                Canvas.ctx.clearRect(0, 0, Canvas.width, Canvas.height);
-                var xmlhttp = new XMLHttpRequest();
-                xmlhttp.onreadystatechange = function() {
-                    if (this.readyState === 4 && this.status === 200) {
-                       console.log(this.responseText);
-                    }
-                };
-                xmlhttp.open("POST", "./getinfo.php", true);
-                xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                xmlhttp.send("task=clear");
-            });
+            window.onload = function() {
+                Canvas.init();
+                            
+                document.onkeydown = checkKey;
+                addListeners();
+                
+                fillBlackboard();
+                setInterval(fillBlackboard, 5000);
+            };
         </script>
     </body>
 </html>
